@@ -3,6 +3,7 @@ package cz.czechitas.webapp;
 import java.time.*;
 import java.util.List;
 
+import javax.swing.*;
 import org.springframework.stereotype.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.*;
@@ -59,4 +60,23 @@ public class HlavniController {
         return new ModelAndView("redirect:/seznam.html");
     }
 
+    @RequestMapping(value = "/{id:[0-9]+}.html", method = RequestMethod.GET)
+    public ModelAndView zobrazUpdate(@PathVariable Long id) {
+        ModelAndView drzakNaDataAJmenoSablony = new ModelAndView("update");
+        Panenka nalezena = panenkaRepository.findById(id);
+        NovaForm formularovaData = new NovaForm();
+        formularovaData.setJmeno(nalezena.getJmeno());
+        drzakNaDataAJmenoSablony.addObject("seznamVrsku", obrazkyRepository.findAllVrsky());
+        drzakNaDataAJmenoSablony.addObject("seznamSpodku", obrazkyRepository.findAllSpodky());
+        drzakNaDataAJmenoSablony.addObject("panenka", formularovaData);
+        return drzakNaDataAJmenoSablony;
+    }
+
+    @RequestMapping(value = "/{id:[0-9]+}.html", method = RequestMethod.POST)
+    public ModelAndView zpracujUpdate(@PathVariable Long id, NovaForm formular) {
+        Panenka upravenyZaznam = new Panenka(formular.getJmeno(), formular.getVrsek(), formular.getSpodek());
+        upravenyZaznam.setId(id);
+        panenkaRepository.updatuj(upravenyZaznam);
+        return new ModelAndView("redirect:/seznam.html");
+    }
 }

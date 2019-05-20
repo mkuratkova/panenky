@@ -35,15 +35,23 @@ public class JdbcPanenkaRepository implements PanenkaRepository {
     }
 
     @Override
+    public Panenka findById(Long id) {
+        Panenka ulozenaPanenka = odesilacDotazu.queryForObject("SELECT ID, Jmeno, Vrsek, Spodek, CasVzniku FROM Panenky WHERE ID = ?",
+                prevodnik,
+                id);
+        return ulozenaPanenka;
+    }
+
+    @Override
     public Panenka save(Panenka zaznamKUlozeni) {
-        Panenka novaPanenka = new Panenka(zaznamKUlozeni.getJmeno() + (int) (Math.random() * 100), zaznamKUlozeni.getVrsek(),
+        Panenka novaPanenka = new Panenka(zaznamKUlozeni.getJmeno(), zaznamKUlozeni.getVrsek(),
                 zaznamKUlozeni.getSpodek());
         if (zaznamKUlozeni.getId() != null) {
             throw new IllegalArgumentException("Panenka.ID musí být null. Panenku lze do databáze jen přidat, nikoliv měnit.");
         }
         Panenka novyZaznam = clone(novaPanenka);
         GeneratedKeyHolder drzakNaVygenerovanyKlic = new GeneratedKeyHolder();
-        String sql = "INSERT INTO Panenky (Jmeno, Vrsek, Spodek, CasVzniku) " +
+        String sql ="INSERT INTO Panenky (Jmeno, Vrsek, Spodek, CasVzniku) " +
                 "VALUES (?, ?, ?, ?)";
         odesilacDotazu.update((Connection con) -> {
                     PreparedStatement prikaz = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -60,13 +68,23 @@ public class JdbcPanenkaRepository implements PanenkaRepository {
 
     @Override
     public void delete(Long id) {
-        odesilacDotazu.update(
-                "DELETE FROM Panenky WHERE ID = ?",
+        odesilacDotazu.update("DELETE FROM Panenky WHERE ID = ?",
                 id);
+    }
+
+    public Panenka updatuj(Panenka zaznamKUlozeni) {
+        zaznamKUlozeni = clone(zaznamKUlozeni);
+        odesilacDotazu.update("UPDATE Panenky SET Jmeno = ?, Vrsek = ?, spodek = ? WHERE ID = ?",
+                zaznamKUlozeni.getJmeno(),
+                zaznamKUlozeni.getVrsek(),
+                zaznamKUlozeni.getSpodek(),
+                zaznamKUlozeni.getId());
+        return zaznamKUlozeni;
     }
 
     private Panenka clone(Panenka puvodniObjekt) {
         return new Panenka(puvodniObjekt.getId(), puvodniObjekt.getJmeno(), puvodniObjekt.getVrsek(), puvodniObjekt.getSpodek(), puvodniObjekt.getCasVzniku());
     }
+
 }
 
